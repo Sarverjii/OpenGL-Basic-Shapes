@@ -20,30 +20,33 @@ const char* fragmentShaderSource = R"(
     }
 )";
 
-void init(GLFWwindow* window) {
+void init() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
     glCompileShader(vertexShader);
 
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
     glCompileShader(fragmentShader);
 
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-    glUseProgram(shaderProgram);
-}
 
-void display() {
-    glClear(GL_COLOR_BUFFER_BIT);
 
-    GLfloat vertices[] = {
-        -0.5f, 0.0f,
-        0.5f, 0.0f
+
+    float vertices[] = {
+        -0.5f, 0.5f,
+        -0.5f, -0.5f,
+        0.5f, -0.5f,
+        0.5f, 0.5f
     };
 
     GLuint VBO, VAO;
@@ -51,14 +54,14 @@ void display() {
     glGenBuffers(1, &VBO);
 
     glBindVertexArray(VAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glDrawArrays(GL_LINES, 0, 2);
+    glUseProgram(shaderProgram);
+    glDrawArrays(GL_QUADS, 0, 4);
 
     glBindVertexArray(0);
 
@@ -67,13 +70,13 @@ void display() {
 
 int main() {
     if (!glfwInit()) {
-        std::cerr << "ERROR: GLFW initialization failed" << std::endl;
+        std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Lines", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(800, 600, "Rectangle", nullptr, nullptr);
     if (!window) {
-        std::cerr << "ERROR: Failed to create GLFW window" << std::endl;
+        std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
@@ -82,19 +85,19 @@ int main() {
 
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
-        std::cerr << "ERROR: GLEW initialization failed" << std::endl;
+        std::cerr << "Failed to initialize GLEW" << std::endl;
         return -1;
     }
 
-    init(window);
+    init();
+
+    
 
     while (!glfwWindowShouldClose(window)) {
         display();
         glfwPollEvents();
     }
 
-    glfwDestroyWindow(window);
     glfwTerminate();
-
     return 0;
 }

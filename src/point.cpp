@@ -2,74 +2,104 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-void init() {
-    // Set the background color
+const char* vertexShaderSource = R"(
+    #version 330 core
+    layout (location = 0) in vec2 position;
+    void main()
+    {
+        gl_Position = vec4(position, 0.0, 1.0);
+    }
+)";
+
+const char* fragmentShaderSource = R"(
+    #version 330 core
+    out vec4 FragColor;
+    void main()
+    {
+        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+)";
+
+void init(GLFWwindow* window) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    // Enable point size setting
     glEnable(GL_PROGRAM_POINT_SIZE);
+
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
+
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+    glUseProgram(shaderProgram);
 }
 
 void display() {
-    // Clear the color buffer
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Set point size
     glPointSize(10.0f);
 
-    // Begin drawing points
-    glBegin(GL_POINTS);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glVertex2f(0.0f, 0.0f);     
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glVertex2f(0.5f, 0.0f);     
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glVertex2f(-0.5f, 0.0f);    
-    glEnd();
+    GLfloat vertices[] = {
+        0.0f, 0.0f,
+        0.5f, 0.0f,
+        -0.5f, 0.0f
+    };
 
-    // Swap buffers
+    GLuint VBO, VAO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+
+    glDrawArrays(GL_POINTS, 0, 3);
+
+    glBindVertexArray(0);
+
     glfwSwapBuffers(glfwGetCurrentContext());
 }
 
 int main() {
-    // Initialize GLFW
     if (!glfwInit()) {
-        std::cout << "ERROR" << std::endl;
+        std::cerr << "ERROR: GLFW initialization failed" << std::endl;
         return -1;
     }
 
-    // Create a windowed mode window and its OpenGL context
     GLFWwindow* window = glfwCreateWindow(800, 600, "Points", nullptr, nullptr);
     if (!window) {
-        std::cerr << "ERROR" << std::endl;
+        std::cerr << "ERROR: Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
 
-    // Make the window's context current
     glfwMakeContextCurrent(window);
 
-    // Initialize GLEW
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
-        std::cerr << "ERROR" << std::endl;
+        std::cerr << "ERROR: GLEW initialization failed" << std::endl;
         return -1;
     }
 
-    // Set up the OpenGL environment
-    init();
+    init(window);
 
-    // Main loop
     while (!glfwWindowShouldClose(window)) {
-        // Render here
         display();
-
-        // Poll for and process events
         glfwPollEvents();
     }
 
-    // Clean up and exit
     glfwDestroyWindow(window);
     glfwTerminate();
+
     return 0;
 }
